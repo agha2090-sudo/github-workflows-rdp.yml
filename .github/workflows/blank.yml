@@ -1,0 +1,24 @@
+name: UK-RDP-DIRECT-LINK
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Launch UK Desktop & Get Link
+        run: |
+          # 1. Docker Desktop Start (UK Timezone)
+          docker run -d -p 8080:80 --shm-size="2gb" -e TZ=Europe/London dorowu/ubuntu-desktop-lxde-vnc
+          
+          # 2. Install Cloudflare (Direct Link Jugar)
+          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+          
+          # 3. Generate Public Link (No Login Required)
+          echo "Aapka RDP Link niche aa raha hai..."
+          cloudflared tunnel --url http://localhost:8080 > cloudflare.log 2>&1 &
+          sleep 15
+          grep -o 'https://[-a-z0-9.]*trycloudflare.com' cloudflare.log | head -n 1
+          
+          # 4. Keep session alive for 6 Hours
+          sleep 21600
