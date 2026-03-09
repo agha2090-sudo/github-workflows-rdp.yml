@@ -1,0 +1,44 @@
+name: UK-VNC-TCP-BYPASS
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup VNC & UK Environment
+        run: |
+          # 1. Update and Install VNC Server & Desktop
+          sudo apt update
+          sudo apt install -y tightvncserver lxde-core desktop-file-utils
+          
+          # 2. VNC Password Setup (Password: 'ubuntu')
+          mkdir -p ~/.vnc
+          echo "ubuntu" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+          
+          # 3. Start VNC Server (UK Timezone)
+          export TZ=Europe/London
+          vncserver :1 -geometry 1280x720 -depth 24
+          
+          # 4. Install Cloudflare
+          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+          
+          # 5. Create TCP Tunnel (Bypassing Card Requirement)
+          echo "VNC Tunnel start ho rahi hai..."
+          cloudflared tunnel --url tcp://localhost:5901 > cloudflare.log 2>&1 &
+          
+          sleep 20
+          
+          # 6. Display Connection Info
+          echo "****************************************************"
+          echo "STEP 1: Apne PC par terminal kholen aur ye likhen:"
+          LINK=$(grep -o 'https://[-a-z0-9.]*trycloudflare.com' cloudflare.log | head -n 1 | sed 's/https:\/\///')
+          echo "cloudflared access tcp --listener localhost:5901 --url $LINK"
+          echo ""
+          echo "STEP 2: VNC Viewer mein ye address dalen: localhost:5901"
+          echo "PASSWORD: ubuntu"
+          echo "****************************************************"
+          
+          # Keep alive
+          sleep 21600
